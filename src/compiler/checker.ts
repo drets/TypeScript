@@ -23649,9 +23649,9 @@ namespace ts {
         }
 
         function isExhaustiveSwitchStatement(node: SwitchStatement): boolean {
-            if (!node.possiblyExhaustive) {
-                return false;
-            }
+            // if (!node.possiblyExhaustive) {
+            //     return false;
+            // }
             if (node.expression.kind === SyntaxKind.TypeOfExpression) {
                 const operandType = getTypeOfExpression((node.expression as TypeOfExpression).expression);
                 // This cast is safe because the switch is possibly exhaustive and does not contain a default case, so there can be no undefined.
@@ -28867,6 +28867,14 @@ namespace ts {
 
             let firstDefaultClause: CaseOrDefaultClause;
             let hasDuplicateDefaultClause = false;
+
+            if (compilerOptions.noIncompleteCaseInSwitch) {
+                const isExhaustive = isExhaustiveSwitchStatement(node)
+
+                if (!isExhaustive) {
+                    error(node, Diagnostics.Exhaustiveness_check_failed_on_switch)
+                }
+            }
 
             const expressionType = checkExpression(node.expression);
             const expressionIsLiteral = isLiteralType(expressionType);

@@ -495,6 +495,13 @@ namespace ts {
             description: Diagnostics.Report_errors_on_unused_parameters,
         },
         {
+            name: "noIncompleteCaseInSwitch",
+            type: "boolean",
+            showInSimplifiedHelpView: true,
+            category: ts.Diagnostics.Additional_Checks,
+            description: ts.Diagnostics.Exhaustiveness_check_failed_on_switch
+        },
+        {
             name: "noImplicitReturns",
             type: "boolean",
             affectsSemanticDiagnostics: true,
