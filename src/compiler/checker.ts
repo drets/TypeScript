@@ -23648,10 +23648,13 @@ namespace ts {
             return facts;
         }
 
-        function isExhaustiveSwitchStatement(node: SwitchStatement): boolean {
-            // if (!node.possiblyExhaustive) {
-            //     return false;
-            // }
+        function isExhaustiveSwitchStatement(node: SwitchStatement, checkForPossiblyExhaustive: boolean): boolean {
+            // TODO: adsjust 'possiblyExhaustive' logic or/and refactor this method.
+            if (checkForPossiblyExhaustive) {
+                if (!node.possiblyExhaustive) {
+                    return false;
+                }
+            }
             if (node.expression.kind === SyntaxKind.TypeOfExpression) {
                 const operandType = getTypeOfExpression((node.expression as TypeOfExpression).expression);
                 // This cast is safe because the switch is possibly exhaustive and does not contain a default case, so there can be no undefined.
@@ -23677,7 +23680,7 @@ namespace ts {
                 return false;
             }
 
-            if (some((<Block>func.body).statements, statement => statement.kind === SyntaxKind.SwitchStatement && isExhaustiveSwitchStatement(<SwitchStatement>statement))) {
+            if (some((<Block>func.body).statements, statement => statement.kind === SyntaxKind.SwitchStatement && isExhaustiveSwitchStatement(<SwitchStatement>statement, true))) {
                 return false;
             }
             return true;
@@ -28865,32 +28868,20 @@ namespace ts {
             // Grammar checking
             checkGrammarStatementInAmbientContext(node);
 
-            let firstDefaultClause: CaseOrDefaultClause;
-            let hasDuplicateDefaultClause = false;
-
-            if (compilerOptions.noIncompleteCaseInSwitch) {
-                const isExhaustive = isExhaustiveSwitchStatement(node)
-
-                if (!isExhaustive) {
-                    error(node, Diagnostics.Exhaustiveness_check_failed_on_switch)
-                }
-            }
-
             const expressionType = checkExpression(node.expression);
             const expressionIsLiteral = isLiteralType(expressionType);
+            let numberOfDefaultClauses = 0;
             forEach(node.caseBlock.clauses, clause => {
                 // Grammar check for duplicate default clauses, skip if we already report duplicate default clause
-                if (clause.kind === SyntaxKind.DefaultClause && !hasDuplicateDefaultClause) {
-                    if (firstDefaultClause === undefined) {
-                        firstDefaultClause = clause;
-                    }
-                    else {
+                if (clause.kind === SyntaxKind.DefaultClause) {
+                    if (numberOfDefaultClauses === 1) {
                         const sourceFile = getSourceFileOfNode(node);
                         const start = skipTrivia(sourceFile.text, clause.pos);
                         const end = clause.statements.length > 0 ? clause.statements[0].pos : clause.end;
                         grammarErrorAtPos(sourceFile, start, end - start, Diagnostics.A_default_clause_cannot_appear_more_than_once_in_a_switch_statement);
-                        hasDuplicateDefaultClause = true;
                     }
+
+                    numberOfDefaultClauses += 1
                 }
 
                 if (produceDiagnostics && clause.kind === SyntaxKind.CaseClause) {
@@ -28913,6 +28904,15 @@ namespace ts {
             });
             if (node.caseBlock.locals) {
                 registerForUnusedIdentifiersCheck(node.caseBlock);
+            }
+            if (numberOfDefaultClauses === 0 && compilerOptions.noIncompleteCaseInSwitch) {
+                const isExhaustive = isExhaustiveSwitchStatement(node, false);
+
+                if (! isExhaustive) {
+                    // TODO Improve the error message to indicate which branches are missing.
+                    const typeOfExpression = getTypeOfExpression(node.expression);
+                    error(node.expression, Diagnostics.Exhaustiveness_check_in_switch_failed_for_0_type, typeToString(typeOfExpression));
+                }
             }
         }
 

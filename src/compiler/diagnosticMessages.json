@@ -5137,7 +5137,11 @@
         "category": "Error",
         "code": 18007
     },
-    "Exhaustiveness check failed on switch": {
+    "Enable exhaustiveness check in switch": {
+        "category": "Message",
+        "code": 95091
+    },
+    "Exhaustiveness check in switch failed for '{0}' type": {
         "category": "Error",
         "code": 18008
     }

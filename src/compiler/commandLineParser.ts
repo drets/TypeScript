@@ -498,8 +498,8 @@ namespace ts {
             name: "noIncompleteCaseInSwitch",
             type: "boolean",
             showInSimplifiedHelpView: true,
-            category: ts.Diagnostics.Additional_Checks,
-            description: ts.Diagnostics.Exhaustiveness_check_failed_on_switch
+            category: Diagnostics.Additional_Checks,
+            description: Diagnostics.Enable_exhaustiveness_check_in_switch
         },
         {
             name: "noImplicitReturns",
